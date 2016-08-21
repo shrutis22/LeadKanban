@@ -1,0 +1,141 @@
+<apex:page controller="LeadKanbanController" standardStylesheets="false" showHeader="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" cache="false" expires="0">
+    <html>
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            
+            <title>Lead Kanban</title>
+            
+            <link type="text/css" href="https://www.lightningdesignsystem.com/assets/styles/slds.css" rel="stylesheet" />
+            <link type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" />
+            <link type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet" />
+            
+            <style type="text/css">
+                body {
+                    padding: 1em;
+                }
+                .slds-item {
+                    box-shadow: 0 0 10px gray;
+                    border: none !important;
+                    background-color: #fff;
+                    border-radius: 0 !important;
+                    border-left: 5px solid #56aadf !important;
+                }
+                .slds-title {
+                    border-radius: 3px;
+                    background-color: #e0e5ee;
+                    border: 1px solid #d8dde6;
+                    cursor: move;
+                }
+                .slds-col {
+                    height: 520px;
+                    overflow-y: auto;
+                    border-left: 1px solid whitesmoke;
+                }
+                .slds-item-placeholder {
+                    border: 2px dotted gray !important;
+                    height: 5rem;
+                }
+                .moving-card {
+                    opacity: 0.5;
+                    transform: rotate( -5deg );
+                }
+            </style>
+        </head>
+        <body>
+            <div class="slds">
+                <!--Page Header-->
+                <div class="slds-page-header slds-m-bottom--small" role="banner">
+                    <div class="slds-media slds-media--center">
+                        <div class="slds-media__body">
+                            <p class="slds-page-header__title slds-truncate slds-align-middle slds-text-heading--large">
+                                <strong><i class="fa fa-th" aria-hidden="true"></i>&nbsp;Lead Kanban</strong>
+                            </p>
+                            <p class="slds-text-body--small page-header__info">Adjusting Lead Stages have never become so easy!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!--Kanban Column Headers-->
+                <div class="slds-grid">
+                    <div class="slds-tabs--path" role="application">
+                        <ul class="slds-tabs--path__nav" role="tablist">
+                            <apex:repeat value="{!leadStatuses}" var="status">
+                                <li class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                                    <a class="slds-tabs--path__link" tabindex="-1" role="tab" href="javascript:void(0);">
+                                        <span class="slds-tabs--path__title slds-text-heading--medium">{!status.label}</span>
+                                    </a>
+                                </li>
+                            </apex:repeat>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!--Kanban Columns-->
+                <div class="slds-grid">
+                    <apex:repeat value="{!leadStatuses}" var="status">
+                        <div class="slds-col slds-size--3-of-12 slds-has-dividers--around-space slds-scrollable--y" name="{!status.value}">
+                            <apex:repeat value="{!allLeads[status.value]}" var="lead">
+                                <div class="slds-item slds-m-around--small" id="{!lead.Id}">
+                                    <div class="slds-tile slds-tile--board">
+                                        <h3 class="slds-section-title--divider slds-m-bottom--small slds-title">
+                                            <a href="javascript:void(0);">
+                                                <i class="fa fa-user fa-fw" aria-hidden="true"></i>&nbsp;{!lead.Name}
+                                            </a>
+                                        </h3>
+                                        
+                                        <div class="slds-tile__detail slds-text-body--small">
+                                            <p class="slds-truncate">
+                                                <i class="fa fa-briefcase fa-fw" aria-hidden="true"></i>&nbsp;{!lead.Title}
+                                            </p>
+                                            
+                                            <p class="slds-truncate">
+                                                <i class="fa fa-building fa-fw" aria-hidden="true"></i>&nbsp;{!lead.Company}
+                                            </p>
+                                            
+                                            <p class="slds-truncate">
+                                                <i class="fa fa-envelope fa-fw" aria-hidden="true"></i>&nbsp;{!lead.Email}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                        </div>
+                    </apex:repeat>
+                </div>
+            </div>
+            <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.js"></script>
+            <script type="text/javascript" src="https://code.jquery.com/ui/1.12.0/jquery-ui.js"></script>
+            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+            <script type="text/javascript">
+                $( ".slds-col" ).sortable(
+                    {
+                        connectWith: ".slds-col",
+                        handle: ".slds-title",
+                        placeholder: "slds-item slds-m-around--small slds-item-placeholder",
+                        start: function( event, ui ) {
+                            $( ui.item ).addClass( "moving-card" );
+                        },
+                        stop: function( event, ui ) {
+                            $( ui.item ).removeClass( "moving-card" );
+                            
+                            var leadId       = $( ui.item ).attr( "id" );
+                            var leadStatus   = $( ui.item ).parent().attr( "name" );
+                            
+                            LeadKanbanController.updateLeadStatus(
+                                leadId,
+                                leadStatus,
+                                function( result, event ) {
+                                    if( result.isSuccess ) {
+                                        toastr.info( result.message );
+                                    }
+                                }
+                            );
+                        }
+                    }
+                );
+            </script>
+        </body>
+    </html>
+</apex:page>
